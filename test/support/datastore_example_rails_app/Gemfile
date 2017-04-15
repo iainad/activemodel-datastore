@@ -14,6 +14,9 @@ gem 'rack-timeout'
 
 gem 'activemodel-datastore', path: File.expand_path('../../../..', __FILE__)
 
+gem 'grpc', '1.2.0'
+# gem 'grpc', '1.2.2'
+
 group :development, :test do
   gem 'byebug'
 end
@@ -24,6 +27,7 @@ group :development do
   gem 'better_errors'
   gem 'spring'
   gem 'spring-watcher-listen'
+  gem 'derailed_benchmarks'
 end
 
 group :test do
@@ -33,3 +37,19 @@ group :test do
   gem 'faker'
   gem 'factory_girl'
 end
+
+# I have created a simplified Rails 5 app that uses the `derailed` gem to show the memory usage.
+# It uses an actual cloud datastore instance, authenticated locally through gcloud auth login.
+# Clone the grpc-1.2.2-memory branch.
+# $ cd test/support/datastore_example_rails_app
+# $ bundle
+# Check if app is connecting to datastore by running:
+# $ RAILS_ENV=production GCLOUD_PROJECT=project-id-goes-here rails server
+# Navigate to localhost:3000 with a browser.
+# Create a few users.
+# Run this command but substitute your datastore project ID.
+# $ DERAILED_SKIP_ACTIVE_RECORD=true PATH_TO_HIT=/users GCLOUD_PROJECT=project-id-goes-here TEST_COUNT=5000 bundle exec derailed exec perf:mem_over_time
+# The profile will take about 15 minutes.
+# Change the version of grpc to 1.2.2 in the Gemfile.
+# $ bundle update
+# Run the derailed command again to compare.
