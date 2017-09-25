@@ -150,7 +150,7 @@ module ActiveModel::Datastore
   # @return [Entity] The updated Google::Cloud::Datastore::Entity.
   #
   def build_entity(parent = nil)
-    entity = CloudDatastore.dataset.entity self.class.name, id
+    entity = CloudDatastore.dataset.entity self.class.entity_kind, id
     if parent.present?
       raise ArgumentError, 'Must be a Key' unless parent.is_a? Google::Cloud::Datastore::Key
       entity.key.parent = parent
@@ -185,7 +185,7 @@ module ActiveModel::Datastore
 
   def destroy
     run_callbacks :destroy do
-      key = CloudDatastore.dataset.key self.class.name, id
+      key = CloudDatastore.dataset.key self.class.entity_kind, id
       key.parent = self.class.parent_key(parent_key_id) if parent?
       self.class.retry_on_exception? { CloudDatastore.dataset.delete key }
     end
@@ -207,6 +207,16 @@ module ActiveModel::Datastore
   # Methods defined here will be class methods when 'include ActiveModel::Datastore'.
   module ClassMethods
     ##
+    # Used to customize the entity kind in datastore
+    #
+    def entity_kind
+      @entity_kind ||= self.name
+    end
+
+    def entity_kind= entity_kind_name
+      @entity_kind = entity_kind_name
+    end
+    ##
     # A default parent key for specifying an ancestor path and creating an entity group.
     #
     def parent_key(parent_id)
@@ -222,7 +232,7 @@ module ActiveModel::Datastore
     # @return [Entity, nil] a Google::Cloud::Datastore::Entity object or nil.
     #
     def find_entity(id_or_name, parent = nil)
-      key = CloudDatastore.dataset.key name, id_or_name
+      key = CloudDatastore.dataset.key entity_kind, id_or_name
       key.parent = parent if parent.present?
       retry_on_exception { CloudDatastore.dataset.find key }
     end
@@ -332,7 +342,7 @@ module ActiveModel::Datastore
     #   User.find_by(name: 'Bryce', ancestor: parent_key)
     #
     def find_by(args)
-      query = CloudDatastore.dataset.query name
+      query = CloudDatastore.dataset.query entity_kind
       query.ancestor(args[:ancestor]) if args[:ancestor]
       query.limit(1)
       query.where(args.keys[0].to_s, '=', args.values[0])
@@ -393,7 +403,7 @@ module ActiveModel::Datastore
     # @return [Query] A datastore query.
     #
     def build_query(options = {})
-      query = CloudDatastore.dataset.query name
+      query = CloudDatastore.dataset.query entity_kind
       query_options(query, options)
     end
 
@@ -483,7 +493,7 @@ module ActiveModel::Datastore
     #
     #
     def find_all_entities(ids_or_names, parent)
-      keys = ids_or_names.map { |id| CloudDatastore.dataset.key name, id }
+      keys = ids_or_names.map { |id| CloudDatastore.dataset.key entity_kind, id }
       keys.map { |key| key.parent = parent } if parent.present?
       retry_on_exception { CloudDatastore.dataset.find_all keys }
     end

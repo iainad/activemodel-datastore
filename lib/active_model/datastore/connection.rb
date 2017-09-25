@@ -36,4 +36,5 @@ module CloudDatastore
   def self.reset_dataset
     @dataset = nil
   end
+
 end
